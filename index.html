@@ -251,19 +251,7 @@
 <div class="topbar">
   <div class="logo">notes<span> → </span>tickets</div>
   <div style="display:flex;align-items:center;gap:16px">
-    <div class="api-key-wrap">
-      <label>API KEY</label>
-      <input
-        class="api-key-input"
-        id="api-key"
-        type="password"
-        placeholder="sk-ant-..."
-        oninput="saveKey(this.value)"
-        autocomplete="off"
-      />
-      <span class="api-key-saved" id="key-saved">✓ saved</span>
-    </div>
-    <div class="status-pill"><div class="status-dot"></div>claude-powered</div>
+   <div class="status-pill"><div class="status-dot"></div>demo prototype</div>
   </div>
 </div>
 
@@ -477,15 +465,95 @@ RULES:
   });
 
   // ─── MAIN API CALL ───────────────────────────────────────────────────────────
-  async function extractTasks() {
-    const notes = document.getElementById('notes').value.trim();
-    if (!notes) { alert('Paste your meeting notes first.'); return; }
+async function extractTasks() {
+  const notes = document.getElementById('notes').value.trim();
 
-    const apiKey = getKey();
-    if (!apiKey || !apiKey.startsWith('sk-ant-')) {
-      alert('Please enter your Anthropic API key in the top bar.\nGet one at: console.anthropic.com');
-      return;
-    }
+  if (!notes) {
+    alert('Paste your meeting notes first.');
+    return;
+  }
+
+  setLoading(true);
+
+  setTimeout(() => {
+    const demoResult = {
+      meeting_summary:
+        "The meeting focused on updating backend authentication to support new tokens while managing legacy admin roles and unclear ownership.",
+
+      tickets: [
+        {
+          id: "TASK-001",
+          title: "Update backend token validation logic",
+          description:
+            "Modify the backend authentication flow so it supports the new token format. Definition of done: new tokens are accepted, invalid tokens are rejected, and existing authentication tests still pass.",
+          priority: "high",
+          owner: "unassigned",
+          type: "feature",
+          risk:
+            "Authentication changes may break login or access control if legacy token behavior is not covered.",
+          missing_info:
+            "Exact new token format and backwards compatibility requirements are not fully specified.",
+          estimated_effort: "M"
+        },
+        {
+          id: "TASK-002",
+          title: "Audit legacy admin roles in database",
+          description:
+            "Review existing admin users with legacy roles and identify which roles may conflict with the new authentication flow. Definition of done: list of affected users and recommended migration action.",
+          priority: "high",
+          owner: "backend team",
+          type: "spike",
+          risk:
+            "Old admin roles may create permission conflicts after the authentication update.",
+          missing_info:
+            "No clear list of legacy role types or expected mapping to the new role model.",
+          estimated_effort: "M"
+        },
+        {
+          id: "TASK-003",
+          title: "Define migration plan for legacy roles",
+          description:
+            "Create a simple migration plan for old admin roles before releasing the new token logic. The plan should include affected users, migration rules, and rollback approach.",
+          priority: "medium",
+          owner: "unassigned",
+          type: "chore",
+          risk:
+            "Without a migration plan, some admin users may lose access or receive incorrect permissions.",
+          missing_info:
+            "Final decision needed on whether migration should be manual or scripted.",
+          estimated_effort: "L"
+        },
+        {
+          id: "TASK-004",
+          title: "Add regression tests for authentication changes",
+          description:
+            "Add tests covering new tokens, invalid tokens, old admin users, and legacy role edge cases. Definition of done: tests run successfully in CI and cover the main permission scenarios.",
+          priority: "medium",
+          owner: "backend team",
+          type: "chore",
+          risk:
+            "Missing tests could allow permission bugs to reach production.",
+          missing_info:
+            "Need confirmation of the highest-risk legacy role cases.",
+          estimated_effort: "M"
+        }
+      ],
+
+      flagged_decisions: [
+        "New token support is required for the backend authentication flow.",
+        "Legacy admin roles are a risk and need review before release."
+      ],
+
+      unactionable_items: [
+        "Some old admin users have weird legacy roles — this is not yet a task until the affected roles are identified.",
+        "Current notes do not confirm who owns the migration decision."
+      ]
+    };
+
+    setLoading(false);
+    renderResults(demoResult);
+  }, 1200);
+}
 
     const ctx = getContext();
     const systemPrompt = buildPrompt(ctx);
