@@ -4,448 +4,595 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>notes → tickets</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
       --bg: #0f0f0f;
-      --surface: #171717;
-      --surface2: #1e1e1e;
-      --border: rgba(255,255,255,0.07);
-      --border2: rgba(255,255,255,0.12);
-      --text: #f0ede8;
-      --muted: #888;
+      --panel: #171717;
+      --panel2: #202020;
+      --border: rgba(255,255,255,0.12);
+      --text: #f4f1ec;
+      --muted: #8b8b8b;
       --accent: #c8f075;
-      --accent-dim: rgba(200,240,117,0.12);
-      --accent-border: rgba(200,240,117,0.3);
       --red: #ff6b6b;
       --amber: #ffb347;
       --blue: #7eb8f7;
-      --mono: 'DM Mono', monospace;
-      --serif: 'Instrument Serif', serif;
-      --sans: 'DM Sans', sans-serif;
+      --mono: "DM Mono", monospace;
+      --sans: "DM Sans", sans-serif;
     }
 
-    html, body { height: 100%; }
-    body { background: var(--bg); font-family: var(--sans); color: var(--text); overflow: hidden; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
 
     .topbar {
+      height: 56px;
       border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      height: 52px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(15,15,15,0.97);
-      position: relative;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
       z-index: 10;
     }
-    .logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.05em; }
-    .logo span { color: var(--muted); }
-    .status-pill {
-      font-family: var(--mono); font-size: 11px; padding: 4px 10px;
-      border-radius: 20px; background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--muted); display: flex; align-items: center; gap: 6px;
-    }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    .api-key-wrap {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .api-key-wrap label {
-      font-family: var(--mono); font-size: 10px; color: var(--muted);
-      letter-spacing: 0.08em; white-space: nowrap;
-    }
-    .api-key-input {
-      background: var(--surface2); border: 1px solid var(--border2);
-      border-radius: 6px; padding: 5px 10px; font-family: var(--mono);
-      font-size: 12px; color: var(--text); outline: none; width: 220px;
-      transition: border-color 0.15s;
+    .logo {
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 14px;
+      letter-spacing: 0.04em;
     }
 
+    .logo span {
+      color: var(--muted);
+    }
+
+    .pill {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #20c997;
+      border-radius: 50%;
+      margin-right: 7px;
+    }
 
     .layout {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      height: calc(100vh - 52px);
+      min-height: calc(100vh - 56px);
     }
 
-    .panel { padding: 1.75rem 2rem; overflow-y: auto; border-right: 1px solid var(--border); }
-    .panel:last-child { border-right: none; }
-
-    .panel-label {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
-      color: var(--muted); text-transform: uppercase; margin-bottom: 1rem;
-      display: flex; align-items: center; gap: 8px;
+    .panel {
+      padding: 28px;
+      border-right: 1px solid var(--border);
     }
-    .panel-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    .context-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
-    .ctx-field { display: flex; flex-direction: column; gap: 5px; }
-    .ctx-field label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
-    .ctx-field input, .ctx-field select {
-      background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px;
-      padding: 7px 10px; font-family: var(--mono); font-size: 12px; color: var(--text); outline: none;
-      transition: border-color 0.15s;
+    .panel:last-child {
+      border-right: none;
     }
-    .ctx-field input:focus, .ctx-field select:focus { border-color: var(--accent-border); }
-    .ctx-field select option { background: #1e1e1e; }
 
-    .notes-area {
-      width: 100%; min-height: 260px; resize: vertical;
-      background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px;
-      padding: 14px 16px; font-family: var(--mono); font-size: 13px; line-height: 1.7;
-      color: var(--text); outline: none; transition: border-color 0.15s; margin-bottom: 1rem;
+    .section-title {
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
     }
-    .notes-area:focus { border-color: var(--accent-border); }
-    .notes-area::placeholder { color: #444; }
 
-    .char-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .char-count { font-family: var(--mono); font-size: 11px; color: #444; }
+    .section-title::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: var(--border);
+    }
+
+    .context-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 14px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: rgba(200,240,117,0.45);
+    }
+
+    textarea {
+      min-height: 280px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .char-count {
+      font-family: var(--mono);
+      color: #555;
+      font-size: 11px;
+      margin: 12px 0 20px;
+    }
+
+    button {
+      cursor: pointer;
+    }
 
     .extract-btn {
-      width: 100%; padding: 13px; background: var(--accent); color: #0f0f0f;
-      border: none; border-radius: 8px; font-family: var(--mono); font-size: 13px;
-      font-weight: 500; letter-spacing: 0.04em; cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%;
+      background: var(--accent);
+      color: #0f0f0f;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 16px;
     }
-    .extract-btn:hover { opacity: 0.9; }
-    .extract-btn:active { transform: scale(0.99); }
-    .extract-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-    .prompt-toggle {
-      margin-top: 1rem; padding: 10px 14px; background: transparent;
-      border: 1px solid var(--border); border-radius: 6px; color: var(--muted);
-      font-family: var(--mono); font-size: 11px; cursor: pointer; width: 100%;
-      text-align: left; transition: border-color 0.15s, color 0.15s;
+    .extract-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
-    .prompt-toggle:hover { border-color: var(--border2); color: var(--text); }
 
-    .prompt-viewer {
-      margin-top: 8px; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 11px;
-      line-height: 1.8; color: #666; white-space: pre-wrap; display: none;
-      max-height: 220px; overflow-y: auto;
+    .prompt-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 13px 14px;
+      font-family: var(--mono);
+      text-align: left;
+      font-size: 12px;
     }
-    .prompt-viewer.open { display: block; }
-    .prompt-viewer .kw { color: var(--accent); }
-    .prompt-viewer .val { color: #aaa; }
 
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; height: 100%; gap: 12px; color: #333; text-align: center;
+    .prompt-box {
+      display: none;
+      margin-top: 12px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.7;
+      color: #aaa;
+      white-space: pre-wrap;
+      max-height: 260px;
+      overflow: auto;
     }
-    .empty-state .big { font-family: var(--serif); font-size: 52px; font-style: italic; color: #222; line-height: 1; }
-    .empty-state p { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: #333; }
 
-    .loading-state {
-      display: none; flex-direction: column; align-items: center;
-      justify-content: center; height: 100%; gap: 16px;
+    .prompt-box.visible {
+      display: block;
     }
-    .loading-state.visible { display: flex; }
+
+    .empty {
+      height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .empty-symbol {
+      color: #242424;
+      font-size: 70px;
+      margin-bottom: 10px;
+    }
+
+    .empty p {
+      font-family: var(--mono);
+      color: #444;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+    }
+
+    .loading {
+      display: none;
+      height: 70vh;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .loading.visible {
+      display: flex;
+    }
+
     .spinner {
-      width: 32px; height: 32px; border: 2px solid var(--border2);
-      border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-state p { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 
-    .results { display: none; }
-    .results.visible { display: block; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-    .summary-bar {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 12px 16px; margin-bottom: 1.25rem; display: flex; gap: 20px; align-items: center;
+    .results {
+      display: none;
     }
-    .stat { text-align: center; }
-    .stat .n { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--accent); }
-    .stat .l { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-top: 1px; }
-    .summary-bar .divider { width: 1px; height: 32px; background: var(--border); }
-    .export-row { display: flex; gap: 8px; margin-left: auto; }
-    .mini-btn {
-      padding: 6px 12px; border: 1px solid var(--border2); border-radius: 6px;
-      background: transparent; color: var(--muted); font-family: var(--mono); font-size: 11px;
-      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+
+    .results.visible {
+      display: block;
     }
-    .mini-btn:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    .summary {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #aaa;
+    }
+
+    .stats {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      flex: 1;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 24px;
+      margin-bottom: 2px;
+    }
+
+    .stat span {
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
 
     .ticket {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-      padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s; position: relative;
-    }
-    .ticket:hover { border-color: var(--border2); }
-    .ticket-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-    .ticket-id { font-family: var(--mono); font-size: 10px; color: #444; letter-spacing: 0.06em; }
-    .ticket-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; flex: 1; }
-    .badge { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
-    .p-high { background: rgba(255,107,107,0.12); color: var(--red); border: 1px solid rgba(255,107,107,0.2); }
-    .p-medium { background: rgba(255,179,71,0.12); color: var(--amber); border: 1px solid rgba(255,179,71,0.2); }
-    .p-low { background: rgba(126,184,247,0.12); color: var(--blue); border: 1px solid rgba(126,184,247,0.2); }
-    .ticket-desc { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 10px; }
-    .ticket-meta { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
-    .meta-item { font-family: var(--mono); font-size: 10px; color: #555; display: flex; align-items: center; gap: 4px; }
-    .meta-item span { color: #888; }
-    .risk-block {
-      margin-top: 8px; padding: 8px 10px; background: rgba(255,107,107,0.05);
-      border: 1px solid rgba(255,107,107,0.1); border-radius: 6px;
-      font-family: var(--mono); font-size: 11px; color: #ff6b6b99; display: none;
-    }
-    .risk-block.has-risk { display: block; }
-    .risk-block strong { color: var(--red); }
-    .missing-block {
-      margin-top: 6px; padding: 8px 10px; background: rgba(255,179,71,0.05);
-      border: 1px solid rgba(255,179,71,0.1); border-radius: 6px;
-      font-family: var(--mono); font-size: 11px; color: #ffb34799; display: none;
-    }
-    .missing-block.has-missing { display: block; }
-    .missing-block strong { color: var(--amber); }
-    .copy-btn {
-      position: absolute; top: 10px; right: 10px; padding: 4px 8px;
-      border: 1px solid var(--border); border-radius: 4px; background: var(--surface2);
-      color: var(--muted); font-family: var(--mono); font-size: 10px;
-      cursor: pointer; opacity: 0; transition: opacity 0.15s;
-    }
-    .ticket:hover .copy-btn { opacity: 1; }
-    .copy-btn:hover { border-color: var(--accent-border); color: var(--accent); }
-
-    .error-box {
-      background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2);
-      border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 12px;
-      color: var(--red); display: none; line-height: 1.6;
-    }
-    .error-box.visible { display: block; }
-
-    .section-label {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
-      color: var(--muted); text-transform: uppercase; margin: 1.25rem 0 0.75rem;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-    .flag-item {
-      font-family: var(--mono); font-size: 11px; color: #666;
-      padding: 6px 0; border-bottom: 1px solid var(--border); line-height: 1.6;
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 12px;
     }
 
-    @media (max-width: 768px) {
-      body { overflow: auto; }
-      .layout { grid-template-columns: 1fr; height: auto; }
-      .panel { border-right: none; border-bottom: 1px solid var(--border); height: auto; }
-      .context-grid { grid-template-columns: 1fr; }
+    .ticket-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .ticket-id {
+      font-family: var(--mono);
+      color: #555;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .ticket h3 {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      border-radius: 7px;
+      padding: 5px 8px;
+      height: fit-content;
+      white-space: nowrap;
+    }
+
+    .high {
+      background: rgba(255,107,107,0.12);
+      color: var(--red);
+      border: 1px solid rgba(255,107,107,0.25);
+    }
+
+    .medium {
+      background: rgba(255,179,71,0.12);
+      color: var(--amber);
+      border: 1px solid rgba(255,179,71,0.25);
+    }
+
+    .low {
+      background: rgba(126,184,247,0.12);
+      color: var(--blue);
+      border: 1px solid rgba(126,184,247,0.25);
+    }
+
+    .desc {
+      color: #999;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #777;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .risk, .missing {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.6;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .risk {
+      color: #ff9c9c;
+      background: rgba(255,107,107,0.07);
+      border: 1px solid rgba(255,107,107,0.15);
+    }
+
+    .missing {
+      color: #ffd08a;
+      background: rgba(255,179,71,0.07);
+      border: 1px solid rgba(255,179,71,0.15);
+    }
+
+    .mini-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .mini-actions button {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .mini-actions button:hover {
+      color: var(--accent);
+      border-color: rgba(200,240,117,0.4);
+    }
+
+    .subsection {
+      margin-top: 22px;
+    }
+
+    .subsection h4 {
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      margin-bottom: 10px;
+    }
+
+    .subsection li {
+      color: #888;
+      font-size: 13px;
+      margin-left: 18px;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 850px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .context-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
-
-<div class="topbar">
-  <div class="logo">notes<span> → </span>tickets</div>
-  <div style="display:flex;align-items:center;gap:16px">
-   <div class="status-pill"><div class="status-dot"></div>demo prototype</div>
-  </div>
-</div>
-
-<div class="layout">
-
-  <!-- LEFT PANEL: Input -->
-  <div class="panel">
-    <div class="panel-label">project context</div>
-    <div class="context-grid">
-      <div class="ctx-field">
-        <label>Project / Team</label>
-        <input type="text" id="ctx-project" placeholder="e.g. Backend API" />
-      </div>
-      <div class="ctx-field">
-        <label>Sprint deadline</label>
-        <input type="text" id="ctx-deadline" placeholder="e.g. May 9" />
-      </div>
-      <div class="ctx-field">
-        <label>Team size</label>
-        <input type="text" id="ctx-team" placeholder="e.g. 4 engineers" />
-      </div>
-      <div class="ctx-field">
-        <label>Current focus</label>
-        <input type="text" id="ctx-focus" placeholder="e.g. auth refactor" />
-      </div>
-    </div>
-
-    <div class="panel-label" style="margin-top:1.5rem">raw meeting notes</div>
-    <textarea
-      class="notes-area"
-      id="notes"
-      placeholder="Paste your raw meeting notes here...
-
-Bullet points, stream-of-consciousness, half-sentences — all fine.
-The messier the input, the more useful the output."
-    ></textarea>
-
-    <div class="char-row">
-      <span class="char-count" id="char-count">0 characters</span>
-    </div>
-
-    <button class="extract-btn" id="extract-btn" onclick="extractTasks()">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <path d="M8 2v12M2 8l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Extract tasks
-    </button>
-
-    <button class="prompt-toggle" id="prompt-toggle" onclick="togglePrompt()">
-      ↳ view system prompt
-    </button>
-    <div class="prompt-viewer" id="prompt-viewer"></div>
+  <div class="topbar">
+    <div class="logo">notes<span> → </span>tickets</div>
+    <div class="pill"><span class="dot"></span>demo prototype</div>
   </div>
 
-  <!-- RIGHT PANEL: Output -->
-  <div class="panel" id="output-panel">
-    <div class="panel-label">structured tickets</div>
+  <main class="layout">
+    <section class="panel">
+      <div class="section-title">project context</div>
 
-    <div class="empty-state" id="empty-state">
-      <div class="big">∅</div>
-      <p>paste notes &amp; extract tasks</p>
-    </div>
+      <div class="context-grid">
+        <div>
+          <label>Project / Team</label>
+          <input id="ctx-project" value="Backend" />
+        </div>
 
-    <div class="loading-state" id="loading-state">
-      <div class="spinner"></div>
-      <p id="loading-text">analysing notes...</p>
-    </div>
+        <div>
+          <label>Sprint deadline</label>
+          <input id="ctx-deadline" value="May 9" />
+        </div>
 
-    <div class="error-box" id="error-box"></div>
+        <div>
+          <label>Team size</label>
+          <input id="ctx-team" value="4 engineers" />
+        </div>
 
-    <div class="results" id="results">
-      <div class="summary-bar" id="summary-bar"></div>
-      <div id="tickets-container"></div>
-    </div>
-  </div>
+        <div>
+          <label>Current focus</label>
+          <input id="ctx-focus" value="auth verification" />
+        </div>
+      </div>
 
-</div>
+      <div class="section-title">raw meeting notes</div>
 
-<script>
-  // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────
-  const SYSTEM_PROMPT = `You are a senior engineering lead helping convert raw meeting notes into structured Jira-style tickets.
+      <textarea id="notes">Backend auth meeting.
 
-CONTEXT (use this to calibrate scope and priorities):
+New tokens are ready from the platform team, but backend also needs to be updated to work with the new tokens.
+
+Some old admin users have weird legacy roles in the database, might cause permission issues.
+
+We need to understand if old roles should still work or be migrated.
+
+Frontend is waiting for backend confirmation.
+
+May 9 deadline.
+
+Nobody is fully sure who owns the legacy role cleanup.
+
+Need tests before release.</textarea>
+
+      <div class="char-count" id="char-count">0 characters</div>
+
+      <button class="extract-btn" id="extract-btn">↓ Extract tasks</button>
+
+      <button class="prompt-btn" id="prompt-btn">↳ view system prompt</button>
+      <div class="prompt-box" id="prompt-box"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">structured tickets</div>
+
+      <div class="empty" id="empty-state">
+        <div class="empty-symbol">∅</div>
+        <p>paste notes & extract tasks</p>
+      </div>
+
+      <div class="loading" id="loading-state">
+        <div class="spinner"></div>
+        <p id="loading-text">analysing notes...</p>
+      </div>
+
+      <div class="results" id="results">
+        <div class="summary" id="summary"></div>
+
+        <div class="stats">
+          <div class="stat">
+            <strong id="stat-tickets">0</strong>
+            <span>tickets</span>
+          </div>
+          <div class="stat">
+            <strong id="stat-high">0</strong>
+            <span>high prio</span>
+          </div>
+          <div class="stat">
+            <strong id="stat-risks">0</strong>
+            <span>risks</span>
+          </div>
+        </div>
+
+        <div class="mini-actions">
+          <button id="copy-all">copy all</button>
+          <button id="export-csv">export CSV</button>
+        </div>
+
+        <div id="tickets-container"></div>
+
+        <div class="subsection">
+          <h4>flagged decisions</h4>
+          <ul id="decisions-list"></ul>
+        </div>
+
+        <div class="subsection">
+          <h4>not yet tasks</h4>
+          <ul id="unactionable-list"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const SYSTEM_PROMPT = `You are a senior engineering lead helping convert raw meeting notes into structured Jira-style tickets.
+
+Your job is not to fully automate project management.
+Your job is to structure messy information so a human can review it quickly.
+
+Rules:
+1. Do not invent owners, deadlines, or decisions.
+2. If something is unclear, flag it as missing information.
+3. Separate real tasks from vague discussion.
+4. Include risk and missing information fields.
+5. Keep output practical and copy-ready for Jira.
+
+Context fields:
 Project: {PROJECT}
 Sprint deadline: {DEADLINE}
 Team size: {TEAM}
-Current focus: {FOCUS}
+Current focus: {FOCUS}`;
 
-YOUR JOB:
-1. Read the raw notes carefully
-2. Identify every actionable item — explicit and implied
-3. Ignore discussion, context-setting, and status updates unless they imply a task
-4. For each task, output a structured ticket
-
-OUTPUT FORMAT — respond ONLY with valid JSON, no markdown, no preamble:
-{
-  "tickets": [
-    {
-      "id": "TASK-001",
-      "title": "Action verb + specific outcome (max 10 words)",
-      "description": "2-3 sentences: what to do, definition of done, any key constraints",
-      "priority": "high | medium | low",
-      "owner": "person name or 'unassigned'",
-      "type": "feature | bug | chore | spike",
-      "risk": "specific risk or blocker if any, else null",
-      "missing_info": "what's unclear that would block this task, else null",
-      "estimated_effort": "S | M | L | XL"
-    }
-  ],
-  "meeting_summary": "One sentence summary of what this meeting was about",
-  "flagged_decisions": ["decision that was made but should be documented"],
-  "unactionable_items": ["things discussed but not yet tasks"]
-}
-
-RULES:
-- Titles MUST start with an action verb (Build, Fix, Write, Investigate, Define, etc.)
-- Never use vague titles like "discuss X" or "look into Y" — convert to concrete actions
-- Priority: high = blocks sprint goal or other tasks, medium = needed this sprint, low = nice to have
-- If context fields are empty, make reasonable assumptions and note them
-- Flag missing owners explicitly rather than guessing`;
-
-  function buildPrompt(ctx) {
-    return SYSTEM_PROMPT
-      .replace('{PROJECT}', ctx.project || 'not specified')
-      .replace('{DEADLINE}', ctx.deadline || 'not specified')
-      .replace('{TEAM}', ctx.team || 'not specified')
-      .replace('{FOCUS}', ctx.focus || 'not specified');
-  }
-
-  // ─── UI HELPERS ──────────────────────────────────────────────────────────────
-  document.getElementById('notes').addEventListener('input', function () {
-    document.getElementById('char-count').textContent = this.value.length + ' characters';
-  });
-
-  function getContext() {
-    return {
-      project: document.getElementById('ctx-project').value.trim(),
-      deadline: document.getElementById('ctx-deadline').value.trim(),
-      team: document.getElementById('ctx-team').value.trim(),
-      focus: document.getElementById('ctx-focus').value.trim(),
-    };
-  }
-
-  function togglePrompt() {
-    const viewer = document.getElementById('prompt-viewer');
-    const btn = document.getElementById('prompt-toggle');
-    viewer.classList.toggle('open');
-    btn.textContent = viewer.classList.contains('open') ? '↳ hide system prompt' : '↳ view system prompt';
-    if (viewer.classList.contains('open')) {
-      const ctx = getContext();
-      const prompt = buildPrompt(ctx);
-      viewer.innerHTML = prompt
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/\{[^}]+\}/g, m => `<span class="kw">${m}</span>`)
-        .replace(/(high \| medium \| low|feature \| bug \| chore \| spike|S \| M \| L \| XL)/g,
-          m => `<span class="val">${m}</span>`);
-    }
-  }
-
-  const loadingMessages = [
-    'parsing structure...', 'identifying actions...', 'calibrating priorities...', 'flagging risks...', 'almost done...'
-  ];
-  let loadingInterval;
-
-  function setLoading(on) {
-    document.getElementById('empty-state').style.display = 'none';
-    document.getElementById('results').classList.remove('visible');
-    document.getElementById('error-box').classList.remove('visible');
-    document.getElementById('extract-btn').disabled = on;
-
-    const ls = document.getElementById('loading-state');
-    if (on) {
-      ls.classList.add('visible');
-      let i = 0;
-      loadingInterval = setInterval(() => {
-        document.getElementById('loading-text').textContent = loadingMessages[i % loadingMessages.length];
-        i++;
-      }, 900);
-    } else {
-      ls.classList.remove('visible');
-      clearInterval(loadingInterval);
-    }
-  }
-
-  function showEmpty() {
-    document.getElementById('empty-state').style.display = '';
-  }
-
-  // ─── DEMO EXTRACTION ──────────────────────────────────────────────────────────
-async function extractTasks() {
-  const notes = document.getElementById('notes').value.trim();
-
-  if (!notes) {
-    alert('Paste your meeting notes first.');
-    return;
-  }
-
-  setLoading(true);
-
-  setTimeout(() => {
     const demoResult = {
       meeting_summary:
         "The meeting focused on updating backend authentication to support new tokens while managing legacy admin roles and unclear ownership.",
@@ -483,7 +630,7 @@ async function extractTasks() {
           id: "TASK-003",
           title: "Define migration plan for legacy roles",
           description:
-            "Create a simple migration plan for old admin roles before releasing the new token logic. The plan should include affected users, migration rules, and rollback approach.",
+            "Create a migration plan for old admin roles before releasing the new token logic. The plan should include affected users, migration rules, and rollback approach.",
           priority: "medium",
           owner: "unassigned",
           type: "chore",
@@ -497,7 +644,7 @@ async function extractTasks() {
           id: "TASK-004",
           title: "Add regression tests for authentication changes",
           description:
-            "Add tests covering new tokens, invalid tokens, old admin users, and legacy role edge cases. Definition of done: tests run successfully in CI and cover the main permission scenarios.",
+            "Add tests covering new tokens, invalid tokens, old admin users, and legacy role edge cases. Definition of done: tests run successfully in CI and cover main permission scenarios.",
           priority: "medium",
           owner: "backend team",
           type: "chore",
@@ -515,130 +662,192 @@ async function extractTasks() {
       ],
 
       unactionable_items: [
-        "Some old admin users have weird legacy roles — this is not yet a task until the affected roles are identified.",
+        "Some old admin users have weird legacy roles — this is not yet a task until affected roles are identified.",
         "Current notes do not confirm who owns the migration decision."
       ]
     };
 
-    setLoading(false);
-    renderResults(demoResult);
-  }, 1200);
-}
+    const notes = document.getElementById("notes");
+    const charCount = document.getElementById("char-count");
+    const extractBtn = document.getElementById("extract-btn");
+    const promptBtn = document.getElementById("prompt-btn");
+    const promptBox = document.getElementById("prompt-box");
+    const emptyState = document.getElementById("empty-state");
+    const loadingState = document.getElementById("loading-state");
+    const loadingText = document.getElementById("loading-text");
+    const results = document.getElementById("results");
 
-  // ─── RENDER ──────────────────────────────────────────────────────────────────
-  function renderResults(data) {
-    const tickets = data.tickets || [];
-    const high = tickets.filter(t => t.priority === 'high').length;
-    const risks = tickets.filter(t => t.risk).length;
+    let lastData = null;
+    let loadingTimer = null;
 
-    window._lastData = data;
-
-    document.getElementById('summary-bar').innerHTML = `
-      <div class="stat"><div class="n">${tickets.length}</div><div class="l">tickets</div></div>
-      <div class="divider"></div>
-      <div class="stat"><div class="n" style="color:var(--red)">${high}</div><div class="l">high prio</div></div>
-      <div class="divider"></div>
-      <div class="stat"><div class="n" style="color:var(--amber)">${risks}</div><div class="l">risks</div></div>
-      <div class="export-row">
-        <button class="mini-btn" onclick="copyAll()">copy all</button>
-        <button class="mini-btn" onclick="exportCSV()">export CSV</button>
-      </div>
-    `;
-
-    let html = '';
-
-    if (data.meeting_summary) {
-      html += `<div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:0 4px 14px;line-height:1.7;">
-        <span style="color:#444">summary: </span>${esc(data.meeting_summary)}</div>`;
+    function updateCharCount() {
+      charCount.textContent = notes.value.length + " characters";
     }
 
-    tickets.forEach((t, i) => {
-      const pClass = t.priority === 'high' ? 'p-high' : t.priority === 'low' ? 'p-low' : 'p-medium';
-      html += `
-      <div class="ticket">
-        <button class="copy-btn" onclick="copyTicket(${i})">copy</button>
-        <div class="ticket-top">
-          <div style="flex:1">
-            <div class="ticket-id">${esc(t.id)} · ${esc(t.type || 'task')} · ${esc(t.estimated_effort || 'M')}</div>
-            <div class="ticket-title">${esc(t.title)}</div>
+    function getPrompt() {
+      return SYSTEM_PROMPT
+        .replace("{PROJECT}", document.getElementById("ctx-project").value || "not specified")
+        .replace("{DEADLINE}", document.getElementById("ctx-deadline").value || "not specified")
+        .replace("{TEAM}", document.getElementById("ctx-team").value || "not specified")
+        .replace("{FOCUS}", document.getElementById("ctx-focus").value || "not specified");
+    }
+
+    function showLoading() {
+      emptyState.style.display = "none";
+      results.classList.remove("visible");
+      loadingState.classList.add("visible");
+      extractBtn.disabled = true;
+
+      const messages = [
+        "parsing structure...",
+        "identifying actions...",
+        "calibrating priorities...",
+        "flagging risks...",
+        "almost done..."
+      ];
+
+      let i = 0;
+      loadingText.textContent = messages[i];
+
+      loadingTimer = setInterval(() => {
+        i = (i + 1) % messages.length;
+        loadingText.textContent = messages[i];
+      }, 400);
+    }
+
+    function hideLoading() {
+      clearInterval(loadingTimer);
+      loadingState.classList.remove("visible");
+      extractBtn.disabled = false;
+    }
+
+    function renderResults(data) {
+      lastData = data;
+
+      const tickets = data.tickets;
+      const high = tickets.filter(t => t.priority === "high").length;
+      const risks = tickets.filter(t => t.risk).length;
+
+      document.getElementById("summary").textContent = data.meeting_summary;
+      document.getElementById("stat-tickets").textContent = tickets.length;
+      document.getElementById("stat-high").textContent = high;
+      document.getElementById("stat-risks").textContent = risks;
+
+      const container = document.getElementById("tickets-container");
+      container.innerHTML = "";
+
+      tickets.forEach(ticket => {
+        const card = document.createElement("div");
+        card.className = "ticket";
+
+        card.innerHTML = `
+          <div class="ticket-top">
+            <div>
+              <div class="ticket-id">${ticket.id} · ${ticket.type} · ${ticket.estimated_effort}</div>
+              <h3>${ticket.title}</h3>
+            </div>
+            <div class="badge ${ticket.priority}">${ticket.priority}</div>
           </div>
-          <div class="badge ${pClass}">${esc(t.priority)}</div>
-        </div>
-        <div class="ticket-desc">${esc(t.description)}</div>
-        <div class="ticket-meta">
-          <div class="meta-item">owner <span>${esc(t.owner || 'unassigned')}</span></div>
-        </div>
-        <div class="risk-block ${t.risk ? 'has-risk' : ''}"><strong>risk:</strong> ${esc(t.risk || '')}</div>
-        <div class="missing-block ${t.missing_info ? 'has-missing' : ''}"><strong>missing info:</strong> ${esc(t.missing_info || '')}</div>
-      </div>`;
+
+          <p class="desc">${ticket.description}</p>
+
+          <div class="meta">
+            <span>owner: ${ticket.owner}</span>
+            <span>effort: ${ticket.estimated_effort}</span>
+            <span>type: ${ticket.type}</span>
+          </div>
+
+          <div class="risk"><strong>risk:</strong> ${ticket.risk}</div>
+          <div class="missing"><strong>missing info:</strong> ${ticket.missing_info}</div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      document.getElementById("decisions-list").innerHTML =
+        data.flagged_decisions.map(item => `<li>${item}</li>`).join("");
+
+      document.getElementById("unactionable-list").innerHTML =
+        data.unactionable_items.map(item => `<li>${item}</li>`).join("");
+
+      results.classList.add("visible");
+    }
+
+    function extractTasks() {
+      if (!notes.value.trim()) {
+        alert("Paste your meeting notes first.");
+        return;
+      }
+
+      showLoading();
+
+      setTimeout(() => {
+        hideLoading();
+        renderResults(demoResult);
+      }, 900);
+    }
+
+    function copyAll() {
+      if (!lastData) return;
+
+      const text = lastData.tickets.map(t => {
+        return `${t.id}: ${t.title}
+Priority: ${t.priority}
+Owner: ${t.owner}
+Type: ${t.type}
+Effort: ${t.estimated_effort}
+
+${t.description}
+
+Risk: ${t.risk}
+Missing info: ${t.missing_info}`;
+      }).join("\n\n---\n\n");
+
+      navigator.clipboard.writeText(text);
+    }
+
+    function exportCSV() {
+      if (!lastData) return;
+
+      const headers = ["ID", "Title", "Priority", "Owner", "Type", "Effort", "Description", "Risk", "Missing Info"];
+      const rows = lastData.tickets.map(t => [
+        t.id,
+        t.title,
+        t.priority,
+        t.owner,
+        t.type,
+        t.estimated_effort,
+        t.description,
+        t.risk,
+        t.missing_info
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+        .join("\n");
+
+      const link = document.createElement("a");
+      link.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+      link.download = "notes-to-tickets-output.csv";
+      link.click();
+    }
+
+    notes.addEventListener("input", updateCharCount);
+
+    extractBtn.addEventListener("click", extractTasks);
+
+    promptBtn.addEventListener("click", () => {
+      promptBox.textContent = getPrompt();
+      promptBox.classList.toggle("visible");
+      promptBtn.textContent = promptBox.classList.contains("visible")
+        ? "↳ hide system prompt"
+        : "↳ view system prompt";
     });
 
-    if (data.flagged_decisions && data.flagged_decisions.length) {
-      html += `<div class="section-label">flagged decisions</div>`;
-      data.flagged_decisions.forEach(d => {
-        html += `<div class="flag-item">— ${esc(d)}</div>`;
-      });
-    }
+    document.getElementById("copy-all").addEventListener("click", copyAll);
+    document.getElementById("export-csv").addEventListener("click", exportCSV);
 
-    if (data.unactionable_items && data.unactionable_items.length) {
-      html += `<div class="section-label">not yet tasks</div>`;
-      data.unactionable_items.forEach(d => {
-        html += `<div class="flag-item" style="color:#444">— ${esc(d)}</div>`;
-      });
-    }
-
-    document.getElementById('tickets-container').innerHTML = html;
-    document.getElementById('results').classList.add('visible');
-  }
-
-  // ─── EXPORT / COPY ───────────────────────────────────────────────────────────
-  function copyTicket(i) {
-    const t = (window._lastData?.tickets || [])[i];
-    if (!t) return;
-    const text = [
-      `${t.id}: ${t.title}`,
-      `Priority: ${t.priority} | Type: ${t.type} | Effort: ${t.estimated_effort}`,
-      `Owner: ${t.owner}`,
-      '',
-      t.description,
-      t.risk ? `\nRisk: ${t.risk}` : '',
-      t.missing_info ? `Missing info: ${t.missing_info}` : ''
-    ].filter(Boolean).join('\n');
-    navigator.clipboard.writeText(text).catch(() => {});
-  }
-
-  function copyAll() {
-    const data = window._lastData;
-    if (!data) return;
-    const lines = (data.tickets || []).map(t =>
-      `${t.id}: ${t.title}\nPriority: ${t.priority} | ${t.type} | Effort: ${t.estimated_effort}\nOwner: ${t.owner}\n${t.description}\n`
-    );
-    navigator.clipboard.writeText(lines.join('\n---\n')).catch(() => {});
-  }
-
-  function exportCSV() {
-    const tickets = window._lastData?.tickets || [];
-    const headers = ['ID', 'Title', 'Priority', 'Type', 'Effort', 'Owner', 'Description', 'Risk', 'Missing Info'];
-    const rows = [headers, ...tickets.map(t => [
-      t.id, t.title, t.priority, t.type, t.estimated_effort,
-      t.owner, t.description, t.risk || '', t.missing_info || ''
-    ])];
-    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-    a.download = 'tickets.csv';
-    a.click();
-  }
-
-  // ─── UTILS ───────────────────────────────────────────────────────────────────
-  function esc(s) {
-    if (!s) return '';
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-</script>
+    updateCharCount();
+  </script>
 </body>
 </html>
